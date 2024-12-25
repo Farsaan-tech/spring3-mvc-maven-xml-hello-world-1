@@ -1,5 +1,5 @@
 pipeline {
-    agent any 
+    agent any
     tools {
         maven "MVN_HOME"
     }
@@ -9,43 +9,43 @@ pipeline {
         NEXUS_URL = "54.90.131.74:8081"
         NEXUS_REPOSITORY = "spring3"
         NEXUS_CREDENTIAL_ID = "nexus"
+        PACKAGING = "war"  // Manually set the packaging type
     }
     stages {
-        stage("clone code") {
+        stage("Clone Code") {
             steps {
                 script {
                     git 'https://github.com/Farsaan-tech/spring3-mvc-maven-xml-hello-world-1.git'
                 }
             }
         }
-        stage("mvn build") {
+        stage("Build with Maven") {
             steps {
                 script {
                     sh 'mvn -Dmaven.test.failure.ignore=true install'
                 }
             }
         }
-        stage("publish to nexus") {
+        stage("Publish to Nexus") {
             steps {
                 script {
-                    pom = readMavenPom file: "pom.xml"
-                    filesByGlob = findFiles(glob: "target/*.${pom.packaging}")
-                    echo "${filesByGlob[0].name} ${filesByGlob[0].path} ${filesByGlob[0].directory} ${filesByGlob[0].length} ${filesByGlob[0].lastModified}"
-                    artifactPath = filesByGlob[0].path
+                    // Manually set the path of the artifact based on the packaging type
+                    def artifactPath = "target/${env.PACKAGING}-artifact.${env.PACKAGING}"
+                    // Check if the artifact exists
                     artifactExists = fileExists artifactPath
                     if (artifactExists) {
-                        echo "*** File: ${artifactPath}, group: ${pom.groupId}, packaging: ${pom.packaging}, version ${BUILD_NUMBER}"
+                        echo "*** File: ${artifactPath}, version ${BUILD_NUMBER}"
                         nexusArtifactUploader(
-                            nexusVersion: NEXUS_VERSION,
-                            protocol: NEXUS_PROTOCOL,
-                            nexusUrl: NEXUS_URL,
-                            groupId: pom.groupId,
+                            nexusVersion: env.NEXUS_VERSION,
+                            protocol: env.NEXUS_PROTOCOL,
+                            nexusUrl: env.NEXUS_URL,
+                            groupId: 'com.ncodeit',
                             version: "${BUILD_NUMBER}",
-                            repository: NEXUS_REPOSITORY,
-                            credentialsId: NEXUS_CREDENTIAL_ID,
+                            repository: env.NEXUS_REPOSITORY,
+                            credentialsId: env.NEXUS_CREDENTIAL_ID,
                             artifacts: [
-                                [artifactId: pom.artifactId, classifier: '', file: artifactPath, type: pom.packaging],
-                                [artifactId: pom.artifactId, classifier: '', file: "pom.xml", type: "pom"]
+                                [artifactId: 'ncodeit-hello-world', classifier: '', file: artifactPath, type: env.PACKAGING],
+                                [artifactId: 'ncodeit-hello-world', classifier: '', file: "pom.xml", type: "pom"]
                             ]
                         )
                     } else {
