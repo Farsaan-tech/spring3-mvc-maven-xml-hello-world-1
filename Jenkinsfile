@@ -26,12 +26,19 @@ pipeline {
                 }
             }
         }
+        stage("Verify Build Output") {
+            steps {
+                script {
+                    def artifactPath = "target/${PACKAGING}-artifact.${PACKAGING}"
+                    echo "Expected artifact path: ${artifactPath}"
+                    sh 'ls -al target/'
+                }
+            }
+        }
         stage("Publish to Nexus") {
             steps {
                 script {
-                    // Manually set the path of the artifact based on the packaging type
-                    def artifactPath = "target/${env.PACKAGING}-artifact.${env.PACKAGING}"
-                    // Check if the artifact exists
+                    def artifactPath = "target/ncodeit-hello-world-3.0.${PACKAGING}"
                     artifactExists = fileExists artifactPath
                     if (artifactExists) {
                         echo "*** File: ${artifactPath}, version ${BUILD_NUMBER}"
